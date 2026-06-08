@@ -1,14 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[17]:
-
-
+#!/usr/bin/env python3
 """
-CS634 Midterm Project: Frequent Itemset Mining
-Complete Implementation with Brute Force, Apriori, and FP-Growth Algorithms
-
-Name: [Prabhath Vinay Vipparthi]
+Frequent Itemset Mining
+Compares Brute Force, Apriori, and FP-Growth on retail transaction datasets.
 """
 
 import pandas as pd
@@ -274,129 +267,105 @@ class ResultDisplayer:
 
 
 def main():
-    """Main function - Complete project implementation"""
-    print("CS634 MIDTERM PROJECT: FREQUENT ITEMSET MINING")
+    """Run the interactive CLI — select a dataset and thresholds, then compare all three algorithms."""
+    print("FREQUENT ITEMSET MINING")
     print("=" * 60)
-    
-    # Part 1: Data Verification
-    print("PART 1: DATASET VERIFICATION")
+
+    print("DATASET VERIFICATION")
     print("-" * 40)
-    
+
     datasets = DataManager.get_available_datasets()
     if len(datasets) != 5:
         print("Error: Not all 5 datasets found. Please ensure these files exist:")
         print("amazon.csv, bestbuy.csv, walmart.csv, target.csv, kroger.csv")
         return
-    
+
     ResultDisplayer.display_dataset_info(datasets)
     print("All 5 datasets verified and available")
-    
-    # Part 4: User Input
-    print("\nPART 4: USER INPUT PARAMETERS")
+
+    print("\nCONFIGURATION")
     print("-" * 40)
-    
+
     dataset_choice = InputValidator.validate_int_input(
-        f"Select a database (1-{len(datasets)}): ", 1, len(datasets)
+        f"Select a dataset (1-{len(datasets)}): ", 1, len(datasets)
     )
     selected_dataset = datasets[dataset_choice - 1]
-    
+
     min_support = InputValidator.validate_float_input("Enter minimum support (0.0-1.0): ")
     min_confidence = InputValidator.validate_float_input("Enter minimum confidence (0.0-1.0): ")
-    
-    # Load selected dataset
+
     print(f"\nLoading dataset: {selected_dataset}")
     transactions = DataManager.load_dataset(selected_dataset)
     print(f"Loaded {len(transactions)} transactions")
-    
-    print(f"\nANALYSIS PARAMETERS:")
+
+    print(f"\nParameters:")
     print(f"  Dataset: {selected_dataset}")
-    print(f"  Minimum Support: {min_support}")
-    print(f"  Minimum Confidence: {min_confidence}")
+    print(f"  Min Support: {min_support}")
+    print(f"  Min Confidence: {min_confidence}")
     print("\n" + "=" * 60)
-    
-    # Part 2: Brute Force Algorithm
-    print("\nPART 2: BRUTE FORCE ALGORITHM")
+
+    # Brute Force
+    print("\nBRUTE FORCE")
     print("-" * 40)
-    
     start_time = time.time()
     bf = BruteForceAlgorithm(transactions)
     bf_itemsets = bf.find_frequent_itemsets(min_support)
     bf_rules = bf.generate_association_rules(min_confidence)
     bf_time = time.time() - start_time
-    
-    total_bf_itemsets = sum(len(itemsets) for itemsets in bf_itemsets.values())
-    
-    # Prepare samples for display
-    bf_sample_itemsets = []
-    for k in bf_itemsets:
-        bf_sample_itemsets.extend(bf_itemsets[k])
-    
+    total_bf_itemsets = sum(len(v) for v in bf_itemsets.values())
+    bf_sample = [info for k in bf_itemsets for info in bf_itemsets[k]]
     ResultDisplayer.display_algorithm_results(
-        "BRUTE FORCE", bf_time, total_bf_itemsets, len(bf_rules),
-        bf_sample_itemsets, bf_rules
+        "BRUTE FORCE", bf_time, total_bf_itemsets, len(bf_rules), bf_sample, bf_rules
     )
-    
-    # Part 3: Library Algorithms
-    print("\nPART 3: APRIORI & FP-GROWTH ALGORITHMS")
-    print("-" * 40)
-    
+
     # Apriori
-    print("\nRunning Apriori Algorithm...")
+    print("\nAPRIORI")
+    print("-" * 40)
     start_time = time.time()
     try:
         apriori_itemsets, apriori_rules = LibraryAlgorithms.run_apriori(
             transactions, min_support, min_confidence
         )
         apriori_time = time.time() - start_time
-        
-        # Convert to lists for display
-        apriori_itemsets_list = apriori_itemsets.to_dict('records') if len(apriori_itemsets) > 0 else []
-        apriori_rules_list = apriori_rules.to_dict('records') if len(apriori_rules) > 0 else []
-        
         ResultDisplayer.display_algorithm_results(
             "APRIORI", apriori_time, len(apriori_itemsets), len(apriori_rules),
-            apriori_itemsets_list, apriori_rules_list
+            apriori_itemsets.to_dict('records') if len(apriori_itemsets) > 0 else [],
+            apriori_rules.to_dict('records') if len(apriori_rules) > 0 else []
         )
     except Exception as e:
-        print(f"Apriori Algorithm Error: {e}")
+        print(f"Apriori error: {e}")
         apriori_time = 0
         apriori_itemsets = pd.DataFrame()
         apriori_rules = pd.DataFrame()
-    
+
     # FP-Growth
-    print("\nRunning FP-Growth Algorithm...")
+    print("\nFP-GROWTH")
+    print("-" * 40)
     start_time = time.time()
     try:
         fpgrowth_itemsets, fpgrowth_rules = LibraryAlgorithms.run_fpgrowth(
             transactions, min_support, min_confidence
         )
         fpgrowth_time = time.time() - start_time
-        
-        # Convert to lists for display
-        fpgrowth_itemsets_list = fpgrowth_itemsets.to_dict('records') if len(fpgrowth_itemsets) > 0 else []
-        fpgrowth_rules_list = fpgrowth_rules.to_dict('records') if len(fpgrowth_rules) > 0 else []
-        
         ResultDisplayer.display_algorithm_results(
             "FP-GROWTH", fpgrowth_time, len(fpgrowth_itemsets), len(fpgrowth_rules),
-            fpgrowth_itemsets_list, fpgrowth_rules_list
+            fpgrowth_itemsets.to_dict('records') if len(fpgrowth_itemsets) > 0 else [],
+            fpgrowth_rules.to_dict('records') if len(fpgrowth_rules) > 0 else []
         )
     except Exception as e:
-        print(f"FP-Growth Algorithm Error: {e}")
+        print(f"FP-Growth error: {e}")
         fpgrowth_time = 0
         fpgrowth_itemsets = pd.DataFrame()
         fpgrowth_rules = pd.DataFrame()
-    
-    # Final Summary
+
     comparison_results = {
         'Brute Force': {'time': bf_time, 'itemsets': total_bf_itemsets, 'rules': len(bf_rules)},
-        'Apriori': {'time': apriori_time, 'itemsets': len(apriori_itemsets), 'rules': len(apriori_rules)},
-        'FP-Growth': {'time': fpgrowth_time, 'itemsets': len(fpgrowth_itemsets), 'rules': len(fpgrowth_rules)}
+        'Apriori':     {'time': apriori_time, 'itemsets': len(apriori_itemsets), 'rules': len(apriori_rules)},
+        'FP-Growth':   {'time': fpgrowth_time, 'itemsets': len(fpgrowth_itemsets), 'rules': len(fpgrowth_rules)},
     }
-    
     ResultDisplayer.display_comparison_summary(comparison_results)
-    
-    print(f"\nPROJECT COMPLETED SUCCESSFULLY!")
-    print(f"All parts implemented: Data Verification, Brute Force, Apriori, FP-Growth, User Interface")
+
+    print("\nDone.")
 
 
 if __name__ == "__main__":
